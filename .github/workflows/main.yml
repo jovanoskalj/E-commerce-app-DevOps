@@ -37,18 +37,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Azure VM via SSH
+      - name: Copy docker-compose.yml to VM
+        uses: appleboy/scp-action@v0.1.6
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "./docker-compose.yml"
+          target: "~/app/docker-compose.yml"
+
+      - name: Deploy with docker-compose on VM
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/food-delivery-backend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest
-
-            docker stop backend || true && docker rm backend || true
-            docker stop frontend || true && docker rm frontend || true
-
-            docker run -d --name backend -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/food-delivery-backend:latest
-            docker run -d --name frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest
+            cd ~/app
+            docker-compose pull
+            docker-compose down || true
+            docker-compose up -d --build

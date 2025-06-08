@@ -21,6 +21,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend  # ако Dockerfile ти е во backend/
+          context: ./food-delivery-backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-backend:latest

@@ -18,9 +18,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./food-delivery-backend  # ако Dockerfile ти е во backend/
+          context: ./food-delivery-backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-backend:latest
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./food-delivery-frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest

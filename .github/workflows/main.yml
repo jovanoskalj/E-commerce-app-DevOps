@@ -35,50 +35,8 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-
+  
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-        
-      - name: Ensure app directory exists on VM
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
-          key: ${{ secrets.AZURE_SSH_KEY }}
-          script: |
-            mkdir -p ~/app
-
-      - name: Copy docker-compose.yml to VM
-        uses: appleboy/scp-action@v0.1.6
-        with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
-          key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "./docker-compose.yml"
-          target: "~/app/docker-compose.yml"
-
-      - name: Check docker-compose.yml on VM
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
-          key: ${{ secrets.AZURE_SSH_KEY }}
-          script: |
-            ls -l ~/app/docker-compose.yml
-            file ~/app/docker-compose.yml
-
-      - name: Fix docker-compose.yml if needed
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
-          key: ${{ secrets.AZURE_SSH_KEY }}
-          script: |
-            if [ -d ~/app/docker-compose.yml ]; then
-              rm -rf ~/app/docker-compose.yml
-            fi
-
       - name: Deploy with docker-compose on VM
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -87,9 +45,6 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
             cd ~/app
-            ls -l docker-compose.yml
-            file docker-compose.yml
-
             docker-compose pull
             docker-compose down || true
             docker-compose up -d --build

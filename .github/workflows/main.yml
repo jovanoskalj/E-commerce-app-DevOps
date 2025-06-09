@@ -37,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        
       - name: Ensure app directory exists on VM
         uses: appleboy/ssh-action@v1.0.0
         with:

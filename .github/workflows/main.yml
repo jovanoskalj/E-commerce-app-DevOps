@@ -18,9 +18,57 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./food-delivery-backend  # ако Dockerfile ти е во backend/
+          context: ./food-delivery-backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-backend:latest
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./food-delivery-frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ensure app directory exists on VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            mkdir -p ~/app
+
+      - name: Copy docker-compose.yml to VM
+        uses: appleboy/scp-action@v0.1.6
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "./docker-compose.yml"
+          target: "~/app/docker-compose.yml"
+
+      - name: Deploy with docker-compose on VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            cd ~/app
+
+            # Повлечи ги најновите Docker имиџи од Docker Hub
+            docker-compose pull
+
+            # Исклучи и отстрани стари контејнери ако постојат
+            docker-compose down || true
+
+            # Пушти нови контејнери
+            docker-compose up -d --build
